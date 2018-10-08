@@ -9,8 +9,10 @@ import org.json.simple.parser.ParseException;
 
 import com.itextpdf.kernel.pdf.PageLabelNumberingStyle;
 import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfOutline;
 import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.kernel.pdf.navigation.PdfExplicitRemoteGoToDestination;
 
 public class Main {
 	
@@ -23,7 +25,11 @@ public class Main {
     	JSONObject json = (JSONObject) new JSONParser().parse(new FileReader(CONFIG_JSON));   	   	
     	
     	setPageLabels(pdf, (JSONArray) json.get("labelRanges"));
-    	setBookmarks(pdf, (JSONArray) json.get("bookmarks"));
+    	
+    	pdf.initializeOutlines();
+    	PdfOutline root = pdf.getOutlines(false);
+    	
+    	setBookmarks(root, (JSONArray) json.get("bookmarks"));
     	
     	pdf.close();
     	System.out.println("Done");
@@ -38,16 +44,25 @@ public class Main {
     		PageLabelNumberingStyle style;
     		
     		switch((String) labelRange.get("style")) {
-    		case "Lowercase Roman Numerals":  style = PageLabelNumberingStyle.LOWERCASE_ROMAN_NUMERALS; break;
-    		case "None":                      style = null;                                             break;
-    		default:                          style = PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS;
+    		    case "Lowercase Roman Numerals":  style = PageLabelNumberingStyle.LOWERCASE_ROMAN_NUMERALS; break;
+    		    case "None":                      style = null;                                             break;
+    		    default:                          style = PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS;
     		}
     		
     		pdf.getPage(startPage).setPageLabel(style, prefix);
     	}
     }
     
-    private static void setBookmarks(PdfDocument pdf, JSONArray bookmarks) {
-    	// TODO Implement
+    private static void setBookmarks(PdfOutline parent, JSONArray bookmarks) {
+    	for (Object obj : bookmarks) {
+    	    JSONObject bookmark = (JSONObject) obj;
+    	    
+    	    String name = (String) bookmark.get("name");
+    	    int page = ((Long) bookmark.get("page")).intValue();
+    	    
+    	    PdfOutline current = parent.addOutline(name);
+    	    current.addDestination(PdfExplicitRemoteGoToDestination.createFit(page));
+    	    setBookmarks(current, (JSONArray) bookmark.get("children"));
+    	}
     }
 }
