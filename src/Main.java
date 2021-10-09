@@ -1,18 +1,12 @@
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-
+import com.itextpdf.kernel.pdf.*;
+import com.itextpdf.kernel.pdf.navigation.PdfExplicitRemoteGoToDestination;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
-import com.itextpdf.kernel.pdf.PageLabelNumberingStyle;
-import com.itextpdf.kernel.pdf.PdfDocument;
-import com.itextpdf.kernel.pdf.PdfOutline;
-import com.itextpdf.kernel.pdf.PdfReader;
-import com.itextpdf.kernel.pdf.PdfWriter;
-import com.itextpdf.kernel.pdf.navigation.PdfExplicitRemoteGoToDestination;
+import java.io.FileReader;
+import java.io.IOException;
 
 public class Main {
 	
@@ -20,7 +14,7 @@ public class Main {
 	private static final String INPUT = "original.pdf";
 	private static final String OUTPUT = "output.pdf";
 	
-    public static void main(String args[]) throws FileNotFoundException, IOException, ParseException {
+    public static void main(String[] args) throws IOException, ParseException {
     	PdfDocument pdf = new PdfDocument(new PdfReader(INPUT), new PdfWriter(OUTPUT));
     	JSONObject json = (JSONObject) new JSONParser().parse(new FileReader(CONFIG_JSON));   	   	
     	
@@ -41,15 +35,13 @@ public class Main {
     		
     		int startPage = ((Long) labelRange.get("start")).intValue();
     		String prefix = (String) labelRange.get("prefix");
-    		PageLabelNumberingStyle style;
-    		
-    		switch((String) labelRange.get("style")) {
-    		    case "Lowercase Roman Numerals":  style = PageLabelNumberingStyle.LOWERCASE_ROMAN_NUMERALS; break;
-    		    case "None":                      style = null;                                             break;
-    		    default:                          style = PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS;
-    		}
-    		
-    		pdf.getPage(startPage).setPageLabel(style, prefix);
+    		PageLabelNumberingStyle style = switch ((String) labelRange.get("style")) {
+				case "Lowercase Roman Numerals" -> PageLabelNumberingStyle.LOWERCASE_ROMAN_NUMERALS;
+				case "None" -> null;
+				default -> PageLabelNumberingStyle.DECIMAL_ARABIC_NUMERALS;
+			};
+
+			pdf.getPage(startPage).setPageLabel(style, prefix);
     	}
     }
     
