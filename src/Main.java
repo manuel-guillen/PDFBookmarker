@@ -19,9 +19,11 @@ public class Main {
     	JSONObject json = (JSONObject) new JSONParser().parse(new FileReader(CONFIG_JSON));   	   	
     	
     	setPageLabels(pdf, (JSONArray) json.get("labelRanges"));
-    	
-    	pdf.initializeOutlines();
-    	PdfOutline root = pdf.getOutlines(false);
+
+		pdf.getOutlines(true).removeOutline();
+
+		pdf.initializeOutlines();
+    	PdfOutline root = pdf.getOutlines(true);
     	
     	setBookmarks(root, (JSONArray) json.get("bookmarks"));
     	
